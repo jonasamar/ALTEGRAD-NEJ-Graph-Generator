@@ -1,1 +1,0 @@
-# ALTEGRAD-NEJ-Graph-Generator
