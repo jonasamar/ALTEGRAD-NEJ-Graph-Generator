@@ -151,6 +151,9 @@ autoencoder = VariationalAutoEncoder(args.spectral_emb_dim+1, args.hidden_dim_en
 optimizer = torch.optim.Adam(autoencoder.parameters(), lr=args.lr)
 scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=500, gamma=0.1)
 
+metrics_autoencoder = {'train_loss': [], 'train_reconstruction_loss': [],
+                          'train_kld_loss': [], 'val_loss': [], 'val_reconstruction_loss': [], 'val_kld_loss': []}
+
 # Train VGAE model
 if args.train_autoencoder:
     best_val_loss = np.inf
@@ -191,6 +194,13 @@ if args.train_autoencoder:
             cnt_val+=1
             val_count += torch.max(data.batch)+1
 
+        metrics_autoencoder['train_loss'].append(train_loss_all/cnt_train)
+        metrics_autoencoder['train_reconstruction_loss'].append(train_loss_all_recon/cnt_train)
+        metrics_autoencoder['train_kld_loss'].append(train_loss_all_kld/cnt_train)
+        metrics_autoencoder['val_loss'].append(val_loss_all/cnt_val)
+        metrics_autoencoder['val_reconstruction_loss'].append(val_loss_all_recon/cnt_val)
+        metrics_autoencoder['val_kld_loss'].append(val_loss_all_kld/cnt_val)
+        
         if epoch % 1 == 0:
             dt_t = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             print('{} Epoch: {:04d}, Train Loss: {:.5f}, Train Reconstruction Loss: {:.2f}, Train KLD Loss: {:.2f}, Val Loss: {:.5f}, Val Reconstruction Loss: {:.2f}, Val KLD Loss: {:.2f}'.format(dt_t,epoch, train_loss_all/cnt_train, train_loss_all_recon/cnt_train, train_loss_all_kld/cnt_train, val_loss_all/cnt_val, val_loss_all_recon/cnt_val, val_loss_all_kld/cnt_val))
@@ -252,6 +262,8 @@ denoise_model = DenoiseNN(
 optimizer = torch.optim.Adam(denoise_model.parameters(), lr=args.lr)
 scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=500, gamma=0.1)
 
+metrics_denoise = {'train_loss': [], 'val_loss': []}
+
 # Train denoising model
 if args.train_denoiser:
     best_val_loss = np.inf
@@ -300,6 +312,9 @@ if args.train_denoiser:
             val_loss_all += x_g.size(0) * loss.item()
             val_count += x_g.size(0)
 
+        metrics_denoise['train_loss'].append(train_loss_all/train_count)
+        metrics_denoise['val_loss'].append(val_loss_all/val_count)
+        
         if epoch % 5 == 0:
             dt_t = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             print('{} Epoch: {:04d}, Train Loss: {:.5f}, Val Loss: {:.5f}'.format(dt_t, epoch, train_loss_all/train_count, val_loss_all/val_count))
@@ -325,6 +340,12 @@ else:
 denoise_model.eval()
 
 del train_loader, val_loader
+
+# Save metrics
+import json
+dt_t = datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
+with open(f"metrics_{dt_t}.json", "w") as f:
+    json.dump({"autoencoder": metrics_autoencoder, "denoise": metrics_denoise}, f)
 
 # Save to a CSV file
 with open("output.csv", "w", newline="") as csvfile:
