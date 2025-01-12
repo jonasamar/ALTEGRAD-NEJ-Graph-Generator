@@ -87,6 +87,7 @@ class DenoiseNN(nn.Module):
 
         self.relu = nn.ReLU()
         self.tanh = nn.Tanh()
+        self.dropout = nn.Dropout(0.05)
 
     def forward(self, x, t, cond):
         cond = torch.reshape(cond, (-1, self.n_cond))
@@ -97,6 +98,7 @@ class DenoiseNN(nn.Module):
             x = torch.cat((x, cond), dim=1)
             x = self.relu(self.mlp[i](x))+t
             x = self.bn[i](x)
+            x = self.dropout(x)
         x = self.mlp[self.n_layers-1](x)
         return x
 
