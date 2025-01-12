@@ -12,8 +12,12 @@ class Decoder(nn.Module):
         self.n_layers = n_layers
         self.n_nodes = n_nodes
 
-        mlp_layers = [nn.Linear(latent_dim, hidden_dim)] + [nn.Linear(hidden_dim, hidden_dim) for i in range(n_layers-2)]
-        mlp_layers.append(nn.Linear(hidden_dim, 2*n_nodes*(n_nodes-1)//2))
+        mlp_layers = [
+            nn.Linear(latent_dim, hidden_dim),
+            nn.Linear(hidden_dim, hidden_dim*2),
+            nn.Linear(hidden_dim*2, hidden_dim*4),
+        ]
+        mlp_layers.append(nn.Linear(hidden_dim*4, 2*n_nodes*(n_nodes-1)//2))
 
         self.mlp = nn.ModuleList(mlp_layers)
         self.relu = nn.ReLU()
