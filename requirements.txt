@@ -1,0 +1,6 @@
+scipy
+torch_geometric
+python-louvain
+grakel
+numpy<2
+scipy==1.11.2
